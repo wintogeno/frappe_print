@@ -1,0 +1,7 @@
+{
+ "cors_allow_origin": "*",
+ "db_name": "_11cce6a5e4080e4b",
+ "db_password": "7sZyjQdOSpPClzHu",
+ "db_type": "mariadb",
+ "ignore_csrf": 1
+}

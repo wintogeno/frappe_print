@@ -2,7 +2,7 @@ version: "3"
 
 services:
   backend:
-    image: frappe/erpnext:v15.40.0
+    image:  absolutum/erp-int:latest
     deploy:
       restart_policy:
         condition: on-failure
@@ -11,7 +11,7 @@ services:
       - logs:/home/frappe/frappe-bench/logs
 
   configurator:
-    image: frappe/erpnext:v15.40.0
+    image:  absolutum/erp-int:latest
     deploy:
       restart_policy:
         condition: none
@@ -33,20 +33,20 @@ services:
       DB_PORT: "3306"
       REDIS_CACHE: redis-cache:6379
       REDIS_QUEUE: redis-queue:6379
-      SOCKETIO_PORT: "9000"
+      SOCKETIO_PORT: "9001"
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
 
   create-site:
-    image: frappe/erpnext:v15.40.0
+    image:  absolutum/erp-int:latest
     deploy:
       restart_policy:
         condition: none
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
-    entrypoint:
+    entrypoint:       
       - bash
       - -c
     command:
@@ -67,8 +67,18 @@ services:
           fi
         done;
         echo "sites/common_site_config.json found";
-        bench new-site --no-mariadb-socket --admin-password=admin --db-root-password=admin --install-app erpnext --set-default frontend;
-
+        bench new-site --no-mariadb-socket --admin-password=admin --db-root-password=admin --set-default erp.com;
+        bench use erp.com;
+        pwd;
+        export NODE_OPTIONS=--max_old_space_size=4096
+        echo "Local and remote Git repositories are not in sync."
+        bench --site erp.com install-app erpnext;
+        bench --site erp.com install-app hrms;
+         bench --site erp.com install-app print_designer;
+        bench --site erp.com migrate;
+        bench config set-common-config -c enable_frappe_logger true;
+        bench set-config cors_allow_origin "*";
+        bench set-config ignore_csrf 1
   db:
     image: mariadb:10.6
     healthcheck:
@@ -89,7 +99,7 @@ services:
       - db-data:/var/lib/mysql
 
   frontend:
-    image: frappe/erpnext:v15.40.0
+    image: absolutum/erp-int:latest
     depends_on:
       - websocket
     deploy:
@@ -99,8 +109,8 @@ services:
       - nginx-entrypoint.sh
     environment:
       BACKEND: backend:8000
-      FRAPPE_SITE_NAME_HEADER: frontend
-      SOCKETIO: websocket:9000
+      FRAPPE_SITE_NAME_HEADER: erp.com
+      SOCKETIO: websocket:9001
       UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
       UPSTREAM_REAL_IP_RECURSIVE: "off"
@@ -113,7 +123,7 @@ services:
       - "8080:8080"
 
   queue-long:
-    image: frappe/erpnext:v15.40.0
+    image: absolutum/erp-int:latest
     deploy:
       restart_policy:
         condition: on-failure
@@ -127,7 +137,7 @@ services:
       - logs:/home/frappe/frappe-bench/logs
 
   queue-short:
-    image: frappe/erpnext:v15.40.0
+    image: absolutum/erp-int:latest
     deploy:
       restart_policy:
         condition: on-failure
@@ -157,7 +167,7 @@ services:
       - redis-cache-data:/data
 
   scheduler:
-    image: frappe/erpnext:v15.40.0
+    image:  absolutum/erp-int:latest
     deploy:
       restart_policy:
         condition: on-failure
@@ -169,7 +179,7 @@ services:
       - logs:/home/frappe/frappe-bench/logs
 
   websocket:
-    image: frappe/erpnext:v15.40.0
+    image:  absolutum/erp-int:latest
     deploy:
       restart_policy:
         condition: on-failure
